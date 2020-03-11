@@ -1,5 +1,4 @@
 
-
 import io.restassured.RestAssured;
 import io.restassured.parsing.Parser;
 import io.restassured.response.Response;
@@ -7,6 +6,7 @@ import io.restassured.response.ResponseBody;
 import io.restassured.response.ValidatableResponse;
 import jdk.jfr.ContentType;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
@@ -14,88 +14,113 @@ import java.util.List;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class TestApiTest {
+public class TestApiTest extends MassadeDados {
+	
+	@BeforeClass
+	public static void inicio() {
+	RestAssured.baseURI = "https://api.thecatapi.com/v1";
+	}
 
-    String url = "https://api.thecatapi.com/v1/images/search?limit=5&page=10&order=Desc";
-    String bodyAut = "{\"email\": \"tiagoamaro01@gmail.com\", \"appDescription\": \"testetesteteste\"}";
-    String autorizacao = "22444789-fee9-4fa4-9163-cf99c362ec2f";
-    //Teste de cadastro no site
+	
+	//EFETUAR CADASTRO NO SITE
+	@Test
+	public void TestApiNovoCadastro() {
+	response=(Response)RestAssured
+			.given()
+			.header("x-api-key","DEMO-API-KEY")
+			.contentType("application/json")
+			.auth().oauth2(autorizacao)
+			.body(bodyCadastro)
+			.when()
+			.post("https://api.thecatapi.com/v1/user/passwordlesssignup")
+			.then().assertThat()
+			.statusCode(200);
+			System.out.println("RESULTADO NOVO CADASOTRO => " + response.asString());
+	}
+	
+ /**VERIFICAR STATUS CODE 400**/
+	/*@Test
+	public void VerificarCamposObrigatorioCadastro() {
+	response=(Response)RestAssured
+			.given()
+			.header("x-api-key","DEMO-API-KEY")
+			.contentType("application/json")
+			.auth().oauth2(autorizacao)
+			.body(bodyCadastroApenasDescricao)
+			.when()
+			.post("https://api.thecatapi.com/v1/user/passwordlesssignup")
+			.then().log().all().assertThat().statude(sCo400);
+			System.out.println(response.getStatusCode());
+			ResponseBody body = response.getBody();
+			String bodyAsString = body.asString();	
+	}
+	*/
 
-//    @Test
-//    public void TestApi() {
-//
-//        RestAssured.given()
-//                .contentType("application/json").auth().oauth2(autorizacao)
-//                .when().get(url)
-//                .then()
-//                .statusCode(200);
-//    }
-//
-//    @Test
-//    public void TestConsultaCategories() {
-//
-//        RestAssured.given()
-//                .contentType("application/json").auth().oauth2(autorizacao)
-//                .when().get("https://api.thecatapi.com/v1/categories")
-//                .then()
-//                .statusCode(200);
-//    }
-//
-//    //Consulta Categorias
-//    @Test
-//    public void TestConsultaCategoriaEspecifica() {
-//        String id = "asho";
-//        RestAssured.given()
-//                .contentType("application/json").auth().oauth2(autorizacao)
-//                .when().get("https://api.thecatapi.com/v1/images/search?breed_"+id)
-//                .then()
-//                .statusCode(200);
-//    }
+	//TESTE LIMITANDO A CONSULTA EM 8
+	@Test
+	public void TestApiPesquisaImagem() {
+		RestAssured.given().queryParam("limit", 8)
+		.contentType("application/json")
+		.auth().oauth2(autorizacao)
+		.when().get(url)
+		.then().log().all().assertThat().statusCode(200);
+	}
 
-//    //Votar
-//    @Test
-//    public void TesteVotarImagem() {
-//        RestAssured.given()
-//                .contentType("application/json").auth().oauth2(autorizacao)
-//                .body("{\"image_id\": \"asf2\",\"sub_id\": \"my-user-1234\",\"value\": 1}")
-//                .when().post("https://api.thecatapi.com/v1/votes")
-//                .then()
-//                .statusCode(200);
-//    }
+	//PESQUISAR POR UMA CATEGORIA ESPECIFICA
+		@Test
+		public void TestConsultaCategoriaEspecifica() {
+			RestAssured.given().queryParam("limit", 8)
+			.contentType("application/json")
+			.auth().oauth2(autorizacao)
+			.when().get("/images/search?breed_" + racaGato)
+			.then().log().all().assertThat().statusCode(200);
 
-    //Votar
-    @Test
-    public void TesteVotarImagem() {
+	}
 
-        String id = "votes";
+	// EFETUAR UMA VOTACAO
+	@Test
+	public void TesteVotarImagem() {
 
-        RestAssured.baseURI = "https://api.thecatapi.com/v1/";
+		try {
+			response = (Response) RestAssured.given().header("x-api-key", "DEMO-API-KEY")
+					.contentType("application/json").auth().oauth2(autorizacao)
+					.body("{\"image_id\":\"asf2\",\"sub_id\":\"my-user-1234\",\"value\":1}")
+					.pathParam("id", votes)
+					.when()
+					.post("/{id}");
 
-        Response response = null;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-        try {
-            response = (Response) RestAssured.given()
-                    .header("x-api-key", "DEMO-API-KEY")
-                    .contentType("application/json").auth().oauth2(autorizacao)
-                    .body("{\"image_id\":\"asf2\",\"sub_id\":\"my-user-1234\",\"value\":1}")
-                    .pathParam("id", id)
-                    .when()
-                    .post("/{id}");
+		System.out.println("Response :" + response.asString());
 
+		ResponseBody body = response.getBody();
+		String bodyAsString = body.asString();
+		Assert.assertEquals("Response body contains SUCCESS", bodyAsString.contains("SUCCESS"), true);
+	}
+	
+	
+	// DELETAR UM VOTO
+		@Test
+		public void deletaImagem() {
 
+			try {
+				response = (Response) RestAssured.given().header("x-api-key", "DEMO-API-KEY")
+						.contentType("application/json").auth().oauth2(autorizacao)
+						.pathParam("idvoto", idvotos)
+						.when()
+						.delete("/vote/" + "idvoto");
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
-        System.out.println("Response :" + response.asString());
+			System.out.println("Response :" + response.asString());
 
-        ResponseBody body = response.getBody();
-        String bodyAsString = body.asString();
-        Assert.assertEquals("Response body contains SUCCESS", bodyAsString.contains("SUCCESS"), true);
-    }
+			ResponseBody body = response.getBody();
+			String bodyAsString = body.asString();
+			Assert.assertEquals("Response body contains SUCCESS", bodyAsString.contains("SUCCESS"), true);
+		}
 
 }
-
-
-
