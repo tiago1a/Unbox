@@ -1,0 +1,10 @@
+Feature: Efetuar um novo cadastro na funcionalidade
+  A fim de efetuar um novo cadastro
+  Os usuários devem ser capazes de
+  efetivar um cadastro
+
+  Scenario: Buscar os gatos
+    Given que eu tenha acesso a funcionalidade
+    And tenha passado o {email} e {descricao}
+    When eu efetuar o envior "https://api.thecatapi.com/v1/images/search"
+    Then Teremos que receber um retorno de sucesso

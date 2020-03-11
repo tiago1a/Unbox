@@ -1,0 +1,10 @@
+Feature: Pesquisa de gato
+  A fim de pesquisar um gato
+  Os usuários devem ser capazes de
+  pesquisa um gato a todo momento
+
+  Scenario: Buscar os gatos
+    Given que eu estou logado como "tiagoamaro01@gmail.com"
+    And tenho o token "22444789-fee9-4fa4-9163-cf99c362ec2f"
+    When eu efetuar a consulta por "https://api.thecatapi.com/v1/images/search"
+    Then Teremos um consulta de gato
